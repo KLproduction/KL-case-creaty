@@ -27,6 +27,9 @@ import { formatPrice } from "@/lib/utils";
 import { BASE_PRICE } from "@/config/product";
 import { useUploadThing } from "@/lib/uploadthing";
 import { useToast } from "@/components/ui/use-toast";
+import { useMutation } from "@tanstack/react-query";
+import { SaveConfigArgs, saveConfig as _saveConfig } from "./actions";
+import { useRouter } from "next/navigation";
 
   interface DesignConfiguratorProps {
     configId: string;
@@ -53,6 +56,25 @@ import { useToast } from "@/components/ui/use-toast";
     });
 
     const {toast} = useToast()
+    const router = useRouter()
+
+    //updating both cropped image to uploadthing and config to db
+    const {mutate: saveConfig} = useMutation({
+      mutationKey:["save-config"],
+      mutationFn: async (args: SaveConfigArgs) =>{
+        await Promise.all([saveConfiguration(), _saveConfig(args)])
+      },
+      onError: ()=>{
+        toast({
+          title: "Something went wrong",
+          description:"There was an error on our end. Please try again.",
+          variant:"destructive"
+        })
+      },
+      onSuccess: () =>{
+        router.push(`/configure/preview?id${configId}`)
+      }
+    })
 
 
     const [renderDimension, setRenderDimension] = useState({
@@ -326,7 +348,13 @@ import { useToast } from "@/components/ui/use-toast";
                   {formatPrice((BASE_PRICE + options.material.price + options.finish.price) / 100)}
                   
                 </p>
-                <Button onClick={() => saveConfiguration()} size="sm" className="w-full">
+                <Button onClick={() => saveConfig({
+                  configId,
+                  color:options.color.value,
+                  finish: options.finish.value,
+                  material: options.material.value,
+                  model: options.model.value
+                })} size="sm" className="w-full">
                   Continue
                   <ArrowRight className="h-4 w-4 ml-1.5 inline"/>
                 </Button>
