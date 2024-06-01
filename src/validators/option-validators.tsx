@@ -63,7 +63,7 @@ export const MODELS = {
             price:PRODUCT_PRICE.material.silicone
         },
         {
-            label:"soft Polycarbonate",
+            label:"Soft Polycarbonate",
             value:"polycarbonate",
             description: "Scratch-resistant coating",
             price:PRODUCT_PRICE.material.polycarbonate

@@ -72,7 +72,7 @@ import { useRouter } from "next/navigation";
         })
       },
       onSuccess: () =>{
-        router.push(`/configure/preview?id${configId}`)
+        router.push(`/configure/preview?id=${configId}`)
       }
     })
 
