@@ -9,7 +9,6 @@ const Navbar = async () => {
   const {getUser}=getKindeServerSession();
   const user = await getUser();
   const isAdmin = user?.email === process.env.ADMIN_EMAIL
-  if(user)console.log(user)
 
   
 

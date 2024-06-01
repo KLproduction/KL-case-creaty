@@ -1,34 +1,96 @@
-"user server"
+'use server'
 
-import { BASE_PRICE, PRODUCT_PRICE } from "@/config/product"
-import { db } from "@/db"
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server"
+
+import { BASE_PRICE, PRODUCT_PRICE } from '@/config/product'
+import { db } from '@/db'
+import { stripe } from '@/lib/stripe'
+import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
+import { Order, User } from '@prisma/client'
 
 export const createCheckoutSession = async ({
-    configId
-}:{
-    configId : string
+  configId,
+}: {
+  configId: string
 }) => {
-    const configuration = await db.configuration.findUnique({
-        where:{id: configId},
+  const configuration = await db.configuration.findUnique({
+    where: { id: configId },
+  })
+  
+  if (!configuration) {
+    throw new Error('No such configuration found')
+  }
+  
+  const { getUser } = getKindeServerSession()
+  const user = await getUser()
+  
+  
+  
+  
+  if (!user) {
+    throw new Error('You need to be logged in')
+  }
+  console.log(user.id, configuration.id,user.email)
+
+  const { finish, material } = configuration
+
+  let price = BASE_PRICE
+  if (finish === 'textured') price += PRODUCT_PRICE.finish.textured
+  if (material === 'polycarbonate')
+    price += PRODUCT_PRICE.material.polycarbonate
+
+  let order: Order | undefined = undefined
+  let newUser: User | undefined = undefined
+    let userEmail = user.email 
+
+  newUser = await db.user.create({
+    data:{
+        id: user.id,
+        email:userEmail
+    }
+  })
+
+  const existingOrder = await db.order.findFirst({
+    where: {
+      userId: user.id,
+      configurationId: configuration.id,
+    },
+  })
+
+
+  if (existingOrder) {
+    order = existingOrder
+  } else {
+    order = await db.order.create({
+      data: {
+        amount: price / 100,
+        userId: user.id,
+        configurationId: configuration.id,
+      },
     })
+  }
 
-    if(!configuration){
-        throw new Error("nNo such configuration found")
-    }
+  const product = await stripe.products.create({
+    name: 'Custom iPhone Case',
+    images: [configuration.imageUrl],
+    default_price_data: {
+      currency: 'GBP',
+      unit_amount: price,
+    },
+  })
 
-    const {getUser} = getKindeServerSession()
-    const user = await getUser()
+  const stripeSession = await stripe.checkout.sessions.create({
+    success_url: `${process.env.NEXT_PUBLIC_SERVER_URL}`,
+    cancel_url: `${process.env.NEXT_PUBLIC_SERVER_URL}`,
+    payment_method_types: ['card', 'paypal'],
+    mode: 'payment',
+    shipping_address_collection: { allowed_countries: ['GB'] },
+    metadata: {
+      userId: user.id,
+      orderId: order.id,
+    },
+    line_items: [{ price: product.default_price as string, quantity: 1 }],
+  })
 
-    if(!user){
-        throw new Error ("You need to be logged in")
-    }
-
-    const {finish,material} = configuration
-
-    let totalPrice = BASE_PRICE
-    if(material === "polycarbonate") totalPrice += PRODUCT_PRICE.material.polycarbonate;
-    if(finish === "textured") totalPrice += PRODUCT_PRICE.finish.textured;
-
-    
+  return { url: stripeSession.url }
 }
+
