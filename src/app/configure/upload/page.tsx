@@ -10,7 +10,7 @@ import { useUploadThing } from "@/lib/uploadthing";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 
-const page = () => {
+const Page = () => {
   const { toast } = useToast()
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
   const [uploadProgress, setuploadProgress] = useState<number>(0);
@@ -60,7 +60,7 @@ const page = () => {
           onDropAccepted={onDropAccepted}
           accept={{
             "image/png": [".png"],
-            "image/jpge": [".jpge"],
+            "image/jpeg": [".jpeg"],
             "image/jpg": [".jpg"],
           }}
           onDragEnter={() => {
@@ -117,4 +117,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;
