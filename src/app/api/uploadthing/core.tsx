@@ -1,7 +1,7 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import { z } from "zod";
-import sharp from "sharp";
+import Jimp from 'jimp';
 import { db } from "@/db";
 
 const f = createUploadthing();
@@ -15,14 +15,13 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ metadata, file }) => {
       const { configId } = metadata.input;
 
-      
-
       const res = await fetch(file.url);
       const buffer = await res.arrayBuffer();
 
-      const imgMetadata = await sharp(buffer).metadata();
-      const { width, height } = imgMetadata;
-      
+      // Using Jimp to read the image and get metadata
+      const image = await Jimp.read(Buffer.from(buffer));
+      const width = image.bitmap.width;
+      const height = image.bitmap.height;
 
       if (!configId) {
         const configuration = await db.configuration.create({
