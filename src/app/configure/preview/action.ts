@@ -39,14 +39,24 @@ export const createCheckoutSession = async ({
     price += PRODUCT_PRICE.material.polycarbonate
 
   let order: Order | undefined = undefined
-  // let newUser: User | undefined = undefined
+  let newUser: User | undefined = undefined;
 
-  // newUser = await db.user.create({
-  //   data:{
-  //       id: user.id,
-  //       email:user.email
-  //   }
-  // })
+  const existingUser = await db.user.findFirst({
+    where: {
+      id: user.id,
+    },
+  });
+  
+  if (!existingUser) {
+    newUser = await db.user.create({
+      data: {
+        id: user.id,
+        email: user.email,
+      },
+    });
+  } else {
+    newUser = existingUser;
+  }
 
   const existingOrder = await db.order.findFirst({
     where: {
