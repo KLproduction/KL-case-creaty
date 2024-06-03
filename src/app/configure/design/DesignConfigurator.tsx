@@ -200,8 +200,8 @@ import { useRouter } from "next/navigation";
             default={{
               x: 150,
               y: 205,
-              height: imageDimensions.height / 2.1,
-              width: imageDimensions.width / 2.1,
+              height: imageDimensions.height / 4,
+              width: imageDimensions.width / 4,
             }}
             className="absolute z-20 border-[3px] border-primary"
             lockAspectRatio
