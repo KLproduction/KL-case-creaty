@@ -1,16 +1,17 @@
 import { db } from '@/db'
 import { stripe } from '@/lib/stripe'
 import { headers } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
 
 
 
-export async function POST(req:Request) {
-  console.log("Received webhook: ", await req.text());
+export async function POST(req:NextRequest) {
+
+  const body = await req.text()
+  console.log("Received webhook: ", body);
   try {
-    const body = await req.text()
     const signature = headers().get('Stripe-Signature')
 
     if (!signature) {
